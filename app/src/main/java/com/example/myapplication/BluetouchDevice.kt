@@ -9,8 +9,20 @@ data class BluetouchDevice(
     val name: String? = "Uknown",
     val addres: String? = "Uknown",
     var uuid: String? = "",
-  var appName: String? = name,
+
 ) {
 
+  val deviceType="Thermostat"//придумать как получить тип автоматически например парсить из названия найденого устройства
 
+  var isConneted = false
+
+  fun setConnected ()
+  {
+    isConneted=true
+  }
+
+  fun setDisconnected()
+  {
+    isConneted=false
+  }
 }

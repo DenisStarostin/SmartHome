@@ -44,6 +44,9 @@ dependencies {
 
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime.android)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.constraintlayout.core)
+    implementation(libs.androidx.constraintlayout.solver)
     val nav_version = "2.8.8"
     implementation(libs.gson)
     implementation(libs.androidx.core.ktx)
