@@ -142,6 +142,17 @@ class BluetoothApp(private val context: Context) {
         }
     }
 
+    fun deleteDevice(device: BluetouchDevice) {
+        if (storedDevices.contains(device)) {
+            storedDevices = storedDevices - device
+            val gson = Gson()
+            val json = gson.toJson(storedDevices)
+            println("JSON: $json")
+            file.writeText(json)
+
+        }
+    }
+
     fun readDevice() {
         if (file.exists()) {
             val json = file.readText()
@@ -199,11 +210,6 @@ class BluetoothApp(private val context: Context) {
 
     fun setCurrentDevice(device: BluetouchDevice) {
         _currentDevice = device
-    }
-
-    fun removeDevice(device: BluetouchDevice) {
-        storedDevices = storedDevices - device
-
     }
 
 

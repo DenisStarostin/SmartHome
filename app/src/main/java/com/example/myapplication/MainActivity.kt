@@ -12,7 +12,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +68,7 @@ sealed class NavRoutes(val route: String) {
     object Setting : NavRoutes("setting")
     object Thermostat : NavRoutes("thermostat")
     object AddDevice : NavRoutes("adddevice")
+    object DeviceSetting : NavRoutes("deviceSetting")
 }
 
 
@@ -91,24 +93,16 @@ fun Main(context: Context) {
     bluetoochapp.readDevice()
     val uiThermostat = thermostatUI(bluetoochapp, context, navController)
     Surface(color = Color.Black) {
+        Card()
+        {
         NavHost(navController, startDestination = NavRoutes.Home.route) {
             composable(NavRoutes.Home.route) { Home(bluetoochapp, navController) }
             composable(NavRoutes.Macro.route) { Macro() }
             composable(NavRoutes.Setting.route) { Setting() }
-            composable(NavRoutes.Thermostat.route) {
-                uiThermostat.Thermostat(
-                    bluetoochapp,
-                    context,
-                    navController
-                )
-            }
-            composable(NavRoutes.AddDevice.route) {
-                AddDevice(
-                    context,
-                    bluetoochapp,
-                    navController
-                )
-            }
+            composable(NavRoutes.Thermostat.route) {uiThermostat.Thermostat(bluetoochapp, context, navController)}
+            composable(NavRoutes.AddDevice.route) {AddDevice(context, bluetoochapp, navController)}
+            composable(NavRoutes.DeviceSetting.route){ deviceSettings(navController, bluetoochapp) }
+        }
         }
     }
 }
@@ -117,7 +111,7 @@ fun Main(context: Context) {
 fun Home(bluetoothApp: BluetoothApp, navController: NavController)
 {
 
-    Surface(color = Color.Black) { Row() { Column { MainMenu(navController) } } }
+     Row() { Column { MainMenu(navController, bluetoothApp) } }
     BluetoothDeviceList(
         onDeviceClick = { device ->
             bluetoothApp.setCurrentDevice(device)
@@ -126,6 +120,38 @@ fun Home(bluetoothApp: BluetoothApp, navController: NavController)
             }
         }, bluetoothApp.storedDevices
     )
+}
+
+@Composable
+fun deviceSettings(navController: NavController, bluetoothApp: BluetoothApp)
+{
+    Row() { Column { MainMenu(navController, bluetoothApp) } }
+
+    Row (
+        modifier = Modifier
+            .padding(top = 150.dp)
+
+    ){
+        Card (modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .padding(horizontal = 10.dp),
+
+            colors = CardDefaults.cardColors(containerColor = Color.Gray)
+        ) {
+            Text(
+                text = "Название устройства",
+                fontSize = 22.sp,
+                textAlign = TextAlign.Start
+            )
+
+            Text(
+                text = bluetoothApp._currentDevice.name.toString(),
+                fontSize = 22.sp,
+                textAlign = TextAlign.End
+            )
+        }
+    }
 }
 
 @Composable
@@ -147,12 +173,11 @@ fun Setting() {
 fun AddDevice(context: Context, bluetoothApp: BluetoothApp, navController: NavController) {
     val handler = Handler(Looper.getMainLooper())
     var updater by remember { mutableStateOf(false) }
-    Surface(color = Color.Black) { Row() { Column { MainMenu(navController) } } }
+    Surface(color = Color.Black) { Row() { Column { MainMenu(navController, bluetoothApp) } } }
     bluetoothApp.checkBluetoothStatus()
     bluetoothApp.startBleScan()
     handler.postDelayed({ updater = true }, 12000)
     if (updater) BluetoothDeviceList(
-
         onDeviceClick = { device ->
             CoroutineScope(Dispatchers.Main).launch {
                 val result = onClick(context, device)
@@ -243,7 +268,7 @@ suspend fun onClick(context: Context, device: BluetouchDevice): Boolean {
 
 
 @Composable
-fun MainMenu(navController: NavController) {
+fun MainMenu(navController: NavController, bluetoothApp: BluetoothApp) {
     var expanded by remember { mutableStateOf(false) }
     var update by remember { mutableStateOf(false) }
 
@@ -264,20 +289,19 @@ fun MainMenu(navController: NavController) {
         "setting" -> name = nameSetting
         "adddevice" -> name = nameAdd
         "thermostat" -> name = nameThermostat
+        "deviceSetting"->name = nameSetting
     }
+    BackHandler { navController.popBackStack() }
 
-    BackHandler(enabled = true) {
-        update = true
-    }
-    Surface(
-        color = Color.Black, modifier = Modifier
+    Card(    modifier = Modifier
             .padding(top = 0.dp)
-            .fillMaxWidth(1f)
+            .fillMaxWidth(1f),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(modifier = Modifier.padding(top = 40.dp, start = 10.dp)) {
             IconButton(
                 onClick = { expanded = true },
-                colors = IconButtonDefaults.iconButtonColors(Color.LightGray)
+             //   colors = IconButtonDefaults.iconButtonColors(Color.LightGray)
             ) {
                 Icon(Icons.Default.Menu, contentDescription = "Показать меню")
             }
@@ -300,37 +324,52 @@ fun MainMenu(navController: NavController) {
                     name = nameAdd
                 }, text = { Text(nameAdd) })
             }
-            Text(name, Modifier.align(Alignment.Center), color = Color.LightGray, fontSize = 28.sp)
+            Text(name,
+                Modifier
+                    .align(Alignment.Center)
+                    .padding(start = 50.dp)
+                , color = Color.LightGray, fontSize = 28.sp)
         }
-        Row(
-            modifier = Modifier.padding(top = 90.dp, end = 10.dp),
-            horizontalArrangement = Arrangement.Absolute.Right,
-            verticalAlignment = Alignment.Bottom,
-        ) {
+
             when (currentRoute) {
                 "home" -> IconButton(
-                    onClick = {
-                        navController.navigate(NavRoutes.AddDevice.route)
-                        name = "Добавить устройство"
-                    },
-                    colors = IconButtonDefaults.iconButtonColors(Color.Green)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Добавить устройство")
-                }
-
-                "thermostat" -> IconButton(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .align(Alignment.End),
                     onClick = {
                         navController.navigate(NavRoutes.AddDevice.route)
                         name = "Добавить устройство"
                     },
                     colors = IconButtonDefaults.iconButtonColors(Color.Gray)
                 ) {
-                    Icon(Icons.Default.Settings, contentDescription = "Настройки")
+                    Icon(Icons.Default.Add, contentDescription = name)
+                }
+
+                "thermostat" -> IconButton(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .align(Alignment.End),
+                    onClick = {
+                        navController.navigate(NavRoutes.DeviceSetting.route)
+                        name = "Настройки"
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(Color.Gray)
+                ) {
+                    Icon(Icons.Default.Settings, contentDescription = name)
+                }
+
+                "deviceSetting" -> IconButton(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .align(Alignment.End),
+                    onClick = {
+                        bluetoothApp.deleteDevice(bluetoothApp._currentDevice)
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(Color.Red)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = name)
                 }
             }
-
-        }
-        //   }
     }
 
 }
