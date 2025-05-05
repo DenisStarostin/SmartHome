@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,8 +60,10 @@ import com.example.myapplication.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 
 
 sealed class NavRoutes(val route: String) {
@@ -129,13 +133,13 @@ fun deviceSettings(navController: NavController, bluetoothApp: BluetoothApp)
 
     Row (
         modifier = Modifier
-            .padding(top = 150.dp)
+            .padding(top = 250.dp)
 
     ){
         Card (modifier = Modifier
             .fillMaxWidth()
-            .height(40.dp)
             .padding(horizontal = 10.dp),
+
 
             colors = CardDefaults.cardColors(containerColor = Color.Gray)
         ) {
@@ -174,9 +178,15 @@ fun AddDevice(context: Context, bluetoothApp: BluetoothApp, navController: NavCo
     val handler = Handler(Looper.getMainLooper())
     var updater by remember { mutableStateOf(false) }
     Surface(color = Color.Black) { Row() { Column { MainMenu(navController, bluetoothApp) } } }
-    bluetoothApp.checkBluetoothStatus()
-    bluetoothApp.startBleScan()
-    handler.postDelayed({ updater = true }, 12000)
+   if( bluetoothApp.checkBluetoothStatus()) {
+       LaunchedEffect(Unit) {
+           updater = withContext(Dispatchers.IO) {
+               bluetoothApp.startBleScan()
+               delay(12000)
+               true
+           }
+       }
+   }
     if (updater) BluetoothDeviceList(
         onDeviceClick = { device ->
             CoroutineScope(Dispatchers.Main).launch {

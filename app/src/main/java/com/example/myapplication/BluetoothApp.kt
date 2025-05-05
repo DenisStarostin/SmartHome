@@ -94,8 +94,8 @@ class BluetoothApp(private val context: Context) {
         }
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-            //  .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-            //   .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
+             .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+               .setNumOfMatches(ScanSettings.MATCH_NUM_ONE_ADVERTISEMENT)
             .build()
         var scanFilters = listOf<ScanFilter>() // Можно добавить фильтры, если нужно
         val filter = ScanFilter.Builder()
@@ -123,11 +123,13 @@ class BluetoothApp(private val context: Context) {
         BLEScanner.stopScan(leScanCallback)
     }
 
-    fun checkBluetoothStatus() {
+    fun checkBluetoothStatus():Boolean {
         if (bluetoothAdapter?.isEnabled == true) {
             println("Bluetooth включен")
+            return true
         } else {
             println("Bluetooth выключен")
+            return false
         }
     }
 
