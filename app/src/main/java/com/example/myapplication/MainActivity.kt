@@ -12,8 +12,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +34,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -96,7 +101,7 @@ fun Main(context: Context) {
     val bluetoochapp = BluetoothApp(context)
     bluetoochapp.readDevice()
     val uiThermostat = thermostatUI(bluetoochapp, context, navController)
-    Surface(color = Color.Black) {
+    Surface(color = CardDefaults.cardColors().containerColor) {
         Card()
         {
         NavHost(navController, startDestination = NavRoutes.Home.route) {
@@ -177,17 +182,36 @@ fun Setting() {
 fun AddDevice(context: Context, bluetoothApp: BluetoothApp, navController: NavController) {
     val handler = Handler(Looper.getMainLooper())
     var updater by remember { mutableStateOf(false) }
-    Surface(color = Color.Black) { Row() { Column { MainMenu(navController, bluetoothApp) } } }
+      Row() { Column { MainMenu(navController, bluetoothApp) } }
    if( bluetoothApp.checkBluetoothStatus()) {
+       bluetoothApp.startBleScan()
+
        LaunchedEffect(Unit) {
-           updater = withContext(Dispatchers.IO) {
-               bluetoothApp.startBleScan()
-               delay(12000)
+           updater = withContext(Dispatchers.IO)
+           {
+               while (!bluetoothApp.scanSucces)
+               {
+
+               }
                true
            }
        }
    }
-    if (updater) BluetoothDeviceList(
+
+    if (!updater)
+    {  Column   (modifier = Modifier
+            .padding(top = 200.dp)
+            .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally // выравнивание для всех детей,
+
+        ){
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .padding(10.dp),
+                color = Color.Blue)
+        }
+    }
+    BluetoothDeviceList(
         onDeviceClick = { device ->
             CoroutineScope(Dispatchers.Main).launch {
                 val result = onClick(context, device)
@@ -198,6 +222,8 @@ fun AddDevice(context: Context, bluetoothApp: BluetoothApp, navController: NavCo
         }, bluetoothApp.devices
     )
 }
+
+
 
 @Composable
 fun BluetoothDeviceList(onDeviceClick: (BluetouchDevice) -> Unit, list: List<BluetouchDevice>) {

@@ -41,6 +41,10 @@ android {
 }
 
 dependencies {
+    val compose_version = "1.8.0" // проверьте последнюю доступную версию
+    implementation ("androidx.compose.ui:ui:$compose_version")
+    implementation ("androidx.compose.foundation:foundation-layout:$compose_version")
+
 
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime.android)

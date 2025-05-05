@@ -20,9 +20,13 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
 
@@ -33,9 +37,9 @@ class BluetoothApp(private val context: Context) {
     private val  handler = Handler(Looper.getMainLooper())
 
     private val SCAN_PERIOD: Long = 10000
-    private var scanning = false
+  //  private var scanning = false
  //   var isConnected= false
-
+    var scanSucces = false
     var devices = listOf<BluetouchDevice>()
     var storedDevices = listOf<BluetouchDevice>()
     var connectedDevices = listOf<BluetoothDevice>()
@@ -75,23 +79,29 @@ class BluetoothApp(private val context: Context) {
                 return
             }
             println("Найдено устройство: ${device.name ?: "Unknown"}, Адрес: ${device.address}")
+            scanSucces = true
         }
 
         override fun onScanFailed(errorCode: Int) {
             super.onScanFailed(errorCode)
             println("Сканирование завершено с ошибкой: $errorCode")
+            scanSucces = false
         }
     }
 
-    //  @RequiresApi(Build.VERSION_CODES.M)
+    @Composable
     fun startBleScan() {
-        if (!scanning) { // Stops scanning after a pre-defined scan period.
-            handler.postDelayed({
-                scanning = false
-                stopBleScan()
-            }, SCAN_PERIOD)
-            scanning = true
-        }
+
+      LaunchedEffect(Unit)
+       {
+          withContext(Dispatchers.IO) {
+               handler.postDelayed({
+                   stopBleScan()
+                    true
+               }, SCAN_PERIOD)
+
+           }
+       }
         val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
              .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
@@ -101,7 +111,7 @@ class BluetoothApp(private val context: Context) {
         val filter = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid.fromString("0000fff0-0000-1000-8000-00805f9b34fb"))
             .build()
-        //scanFilters = scanFilters + filter
+        scanFilters = scanFilters + filter
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.BLUETOOTH_SCAN
