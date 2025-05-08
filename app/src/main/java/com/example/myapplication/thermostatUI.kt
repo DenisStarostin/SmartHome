@@ -512,10 +512,10 @@ fun topIndicator(temperature: String, humidification: String)
         isConnected = bluetoothApp.isConnected(device.addres)
 
         LaunchedEffect(device.addres) {
-            while (!isConnected) {
+            while (device.bluetoothGatt == null) {
                 isConnected = withContext(Dispatchers.IO) {
                     bluetoothApp.deviceConnect(device.addres)
-                    delay(100)
+                    delay(5000)
                     bluetoothApp.isConnected(device.addres)
                 }
                 delay(1000)

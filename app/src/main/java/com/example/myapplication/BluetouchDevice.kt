@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.bluetooth.BluetoothGatt
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -11,6 +12,7 @@ data class BluetouchDevice(
     var uuid: String? = "",
 
 ) {
+  var bluetoothGatt: BluetoothGatt? = null
 
   val deviceType="Thermostat"//придумать как получить тип автоматически например парсить из названия найденого устройства
 

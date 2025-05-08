@@ -44,7 +44,7 @@ class BluetoothApp(private val context: Context) {
     var storedDevices = listOf<BluetouchDevice>()
     var connectedDevices = listOf<BluetoothDevice>()
     private val file = File(context.applicationContext.filesDir, "devices.json")
-    var bluetoothGatt: BluetoothGatt? = null
+
 
     lateinit var wCharacteristic: BluetoothGattCharacteristic
 
@@ -195,17 +195,16 @@ class BluetoothApp(private val context: Context) {
         return result
     }
 
-    fun deviceConnect(deviceAddres: String?): BluetoothGatt? {
+    fun deviceConnect(deviceAddres: String?) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.BLUETOOTH_CONNECT
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            return null
+            return
         }
         val device: BluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddres)
-        bluetoothGatt = device.connectGatt(context, true, gattCallback, TRANSPORT_LE)
-        return bluetoothGatt
+        _currentDevice.bluetoothGatt = device.connectGatt(context, true, gattCallback, TRANSPORT_LE)
     }
 
     fun deviceDisconnect()
@@ -217,7 +216,9 @@ class BluetoothApp(private val context: Context) {
         ) {
             return
         }
-        bluetoothGatt?.disconnect()
+        _currentDevice.bluetoothGatt?.disconnect()
+        _currentDevice.bluetoothGatt?.close()
+        _currentDevice.bluetoothGatt = null
     }
 
     fun setCurrentDevice(device: BluetouchDevice) {
@@ -244,6 +245,7 @@ class BluetoothApp(private val context: Context) {
                 // Отключение
                 //       isConnected=false
                 gatt.close()
+                _currentDevice.bluetoothGatt = null
             }
         }
 
@@ -344,7 +346,7 @@ class BluetoothApp(private val context: Context) {
             return
         }
         if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) {
-            bluetoothGatt?.writeCharacteristic(characteristic, data, WRITE_TYPE_NO_RESPONSE)
+            _currentDevice.bluetoothGatt?.writeCharacteristic(characteristic, data, WRITE_TYPE_NO_RESPONSE)
         }
 
     }
@@ -361,11 +363,11 @@ class BluetoothApp(private val context: Context) {
 
             return
         }
-        bluetoothGatt?.readCharacteristic(characteristic)
+        _currentDevice.bluetoothGatt?.readCharacteristic(characteristic)
     }
 
     fun enableNotifications(characteristic: BluetoothGattCharacteristic) {
-        bluetoothGatt?.let { gatt ->
+        _currentDevice.bluetoothGatt?.let { gatt ->
             if (ActivityCompat.checkSelfPermission(
                     context,
                     Manifest.permission.BLUETOOTH_CONNECT
